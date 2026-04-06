@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Admin Tracking Pengunjung Bromo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background-color: #f8f9fa; }
+    .card { border-radius: 10px; }
+  </style>
+
+<style>
+  /* 1. Latar Belakang Utama */
+  body {
+    background-image: url("https://i.pinimg.com/736x/d5/fa/66/d5fa660d2e02cb8b5f2c3e1489919426.jpg");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: #f8f9fa;
+  }
+
+  /* 2. Efek Blur Global */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.4); /* Gelapkan agar teks terbaca */
+    backdrop-filter: blur(8px);
+    z-index: -1;
+  }
+
+  /* 3. Desain Kartu (Glassmorphism) */
+  .card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 15px !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  /* 4. Menyesuaikan tabel agar sinkron dengan tema glass */
+  .table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+  
+  .table {
+    color: #333;
+  }
+
+  /* Navigasi */
+  .navbar {
+    background: rgba(33, 37, 41, 0.9) !important;
+    backdrop-filter: blur(5px);
+  }
+</style>
+
+</head>
+<body>
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+  <div class="container-fluid">
+    <a class="navbar-brand fw-bold" href="#">Bromo Dashboard Admin</a>
+    <div class="d-flex align-items-center ms-auto">
+      <a href="login.html" class="btn btn-light me-2">
+        <i class="bi bi-box-arrow-in-right"></i> Masuk
+      </a>
+      <a href="register.html" class="btn btn-warning">
+        <i class="bi bi-person-plus"></i> Daftar
+      </a>
+    </div>
+  </div>
+</nav>
+
+  <!-- Main Content Full Width -->
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-12 p-4">
+        <!-- Statistik Ringkas -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-center shadow">
+              <div class="card-body">
+                <i class="bi bi-people fs-2 text-primary"></i>
+                <h6>Total Pengunjung</h6>
+                <h4>12.450</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow">
+              <div class="card-body">
+                <i class="bi bi-person-check fs-2 text-success"></i>
+                <h6>Pengunjung Hari Ini</h6>
+                <h4>245</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow">
+              <div class="card-body">
+                <i class="bi bi-cash-stack fs-2 text-warning"></i>
+                <h6>Total Pembayaran</h6>
+                <h4>Rp 75.000.000</h4>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center shadow">
+              <div class="card-body">
+                <i class="bi bi-ticket-perforated fs-2 text-danger"></i>
+                <h6>Tiket Terjual</h6>
+                <h4>1.245</h4>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Grafik Pengunjung -->
+        <div class="card mb-4 shadow">
+          <div class="card-body">
+            <h5 class="text-primary">Grafik Pengunjung Bulanan</h5>
+            <canvas id="visitorChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Tabel Data Pengunjung -->
+        <div class="card mb-4 shadow">
+          <div class="card-body">
+            <h5 class="text-success">Data Pengunjung Terbaru</h5>
+            <table class="table table-striped table-hover">
+              <thead class="table-dark">
+                <tr>
+                  <th>Nama</th>
+                  <th>Tanggal Kunjungan</th>
+                  <th>Tiket</th>
+                  <th>Status Pembayaran</th>
+                </tr>
+              </thead>
+              <tbody id="tabelPengunjung">
+                <!-- Data akan dimuat otomatis dari localStorage -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        
+
+<script>
+  // Fungsi simpan data tiket ke localStorage
+  function simpanTiket(nama, tanggal, jumlah, status) {
+    let dataList = JSON.parse(localStorage.getItem("dataTiket")) || [];
+    const newData = { nama, tanggal, jumlah, status };
+    dataList.push(newData);
+    localStorage.setItem("dataTiket", JSON.stringify(dataList));
+  }
+
+  // Fungsi load data tiket ke tabel dashboard
+  function loadDataPengunjung() {
+    let data = JSON.parse(localStorage.getItem("dataTiket")) || [];
+    let tbody = document.getElementById("tabelPengunjung");
+    tbody.innerHTML = "";
+
+    data.slice(-5).forEach(item => {
+      let row = `
+        <tr>
+          <td>${item.nama}</td>
+          <td>${item.tanggal}</td>
+          <td>${item.jumlah}</td>
+          <td>${item.status}</td>
+        </tr>
+      `;
+      tbody.innerHTML += row;
+    });
+  }
+
+  // Panggil saat halaman dibuka
+  loadDataPengunjung();
+
+  // Chart.js grafik pengunjung
+  const ctx = document.getElementById('visitorChart').getContext('2d');
+  const visitorChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun'],
+      datasets: [{
+        label: 'Jumlah Pengunjung',
+        data: [1200, 1500, 1800, 2000, 1700, 1900],
+        borderColor: 'rgba(54, 162, 235, 1)',
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        fill: true,
+        tension: 0.3
+      }]
+    }
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
